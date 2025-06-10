@@ -15,7 +15,7 @@ namespace BlazorShop.API.Controllers
 
         private ILogger logger;
 
-        public CarrinhoCompraController(ICarrinhoCompraRepository carrinhoCompraRepository, IProdutoRepository produtoRepository, ILogger logger)
+        public CarrinhoCompraController(ICarrinhoCompraRepository carrinhoCompraRepository, IProdutoRepository produtoRepository, ILogger<CarrinhoCompraController> logger)
         {
             this.carrinhoCompraRepository = carrinhoCompraRepository;
             this.produtoRepository = produtoRepository;
