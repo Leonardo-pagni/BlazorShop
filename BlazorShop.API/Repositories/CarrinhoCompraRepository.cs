@@ -1,6 +1,8 @@
 ﻿using BlazorShop.Api.Context;
 using BlazorShop.API.Entities;
 using BlazorShop.Models.DTOS;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Update.Internal;
 
 namespace BlazorShop.API.Repositories
 {
@@ -13,9 +15,33 @@ namespace BlazorShop.API.Repositories
             _context = context;
         }
 
-        public Task<CarrinhoItem> AdicionaItem(CarrinhoItemAdicionaDto carrinhoItemAdicionaDto)
+        private async Task<bool> CarrinhoItemJaExiste(int carrinhoid, int produtoId)
         {
-            throw new NotImplementedException();
+            return await _context.CarrinhoItens.AnyAsync(c => c.CarrinhoId == carrinhoid &&
+                                                        c.ProdutoId == produtoId);
+        }
+
+        public async Task<CarrinhoItem> AdicionaItem(CarrinhoItemAdicionaDto carrinhoItemAdicionaDto)
+        {
+            if(await CarrinhoItemJaExiste(carrinhoItemAdicionaDto.CarrinhoId, carrinhoItemAdicionaDto.ProdutoId) == false) //verifica se ja tem o item no carrinho
+            {
+                var item = await (from produto in _context.Produtos
+                                  where produto.Id == carrinhoItemAdicionaDto.ProdutoId
+                                  select new CarrinhoItem
+                                  {
+                                      CarrinhoId = carrinhoItemAdicionaDto.CarrinhoId,
+                                      ProdutoId = carrinhoItemAdicionaDto.ProdutoId,
+                                      Quantidade = carrinhoItemAdicionaDto.Quantidade
+                                  }).SingleOrDefaultAsync();
+
+                if(item is not null) // se o item exisitr, não inclui no carrinho
+                {
+                    var resultado = await _context.CarrinhoItens.AddAsync(item);
+                    await _context.SaveChangesAsync();
+                    return resultado.Entity;
+                }
+            }
+            return null;
         }
 
         public Task<CarrinhoItem> AtualizaQuantidade(int id, CarrinhoItemAtualizaQuantidadeDto carrinhoItemAtualizaQuantidadeDto)
@@ -28,14 +54,34 @@ namespace BlazorShop.API.Repositories
             throw new NotImplementedException();
         }
 
-        public Task<CarrinhoItem> GetItem(int id)
+        public async Task<CarrinhoItem> GetItem(int id)
         {
-            throw new NotImplementedException();
+            return await (from carrinho in _context.Carrinhos
+                          join carrinhoItem in _context.CarrinhoItens
+                          on carrinho.Id equals carrinhoItem.CarrinhoId
+                          where carrinhoItem.Id == id
+                          select new CarrinhoItem
+                          {
+                              Id = carrinhoItem.Id,
+                              ProdutoId = carrinhoItem.ProdutoId,
+                              Quantidade = carrinhoItem.Quantidade,
+                              CarrinhoId = carrinhoItem.CarrinhoId
+                          }).SingleOrDefaultAsync();
         }
 
-        public Task<IEnumerable<CarrinhoItem>> GetItens(string usuarioId)
+        public async Task<IEnumerable<CarrinhoItem>> GetItens(int usuarioId)
         {
-            throw new NotImplementedException();
+            return await (from carrinho in _context.Carrinhos
+                          join carrinhoItem in _context.CarrinhoItens
+                          on carrinho.Id equals carrinhoItem.CarrinhoId
+                          where carrinho.UsuarioId == usuarioId
+                          select new CarrinhoItem
+                          {
+                              Id = carrinhoItem.Id,
+                              ProdutoId = carrinhoItem.ProdutoId,
+                              Quantidade = carrinhoItem.Quantidade,
+                              CarrinhoId = carrinhoItem.CarrinhoId
+                          }).ToListAsync();
         }
     }
 }

@@ -13,6 +13,6 @@ namespace BlazorShop.API.Repositories
 
         Task<CarrinhoItem> GetItem(int id);
 
-        Task<IEnumerable<CarrinhoItem>> GetItens(string usuarioId);
+        Task<IEnumerable<CarrinhoItem>> GetItens(int usuarioId);
     }
 }
