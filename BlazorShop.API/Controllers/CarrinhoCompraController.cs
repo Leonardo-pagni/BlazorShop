@@ -3,6 +3,7 @@ using BlazorShop.API.Repositories;
 using BlazorShop.Models.DTOS;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.SqlServer.Query.Internal;
 
 namespace BlazorShop.API.Controllers
 {
@@ -102,6 +103,56 @@ namespace BlazorShop.API.Controllers
             catch(Exception ex)
             {
                 logger.LogError("Erro ao criar um novo item no carrinho. Detalhes : " + ex.Message);
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<ActionResult<CarrinhoItemDto>> DeleteItem(int id)
+        {
+            try
+            {
+                var carrinhoItem = await carrinhoCompraRepository.DeletaItem(id);
+                
+                if(carrinhoItem == null)
+                {
+                    return NotFound();
+                }
+
+                var produto = await produtoRepository.GetItem(carrinhoItem.ProdutoId);
+
+                if (produto == null)
+                {
+                    return NotFound();
+                }
+
+                var carrinhoItemDto = carrinhoItem.ConverterCarrinhoItemParaDto(produto);
+                return carrinhoItemDto;
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
+        }
+
+        [HttpPatch("{id:int}")]
+        public async Task<ActionResult<CarrinhoItemDto>> AtualizaQuantidade(int id, CarrinhoItemAtualizaQuantidadeDto carrinhoItemAtualizaQuantidadeDto)
+        {
+            try
+            {
+                var carrinhoItem = await carrinhoCompraRepository.AtualizaQuantidade(id, carrinhoItemAtualizaQuantidadeDto);
+
+                if(carrinhoItem == null)
+                {
+                    return NotFound();
+                }
+
+                var produto = await produtoRepository.GetItem(carrinhoItem.ProdutoId);
+                var carrinhoDto = carrinhoItem.ConverterCarrinhoItemParaDto(produto);
+                return Ok(carrinhoDto);
+            }
+            catch (Exception ex)
+            {
                 return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
             }
         }

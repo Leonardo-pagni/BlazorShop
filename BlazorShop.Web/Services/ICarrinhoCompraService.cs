@@ -6,5 +6,8 @@ namespace BlazorShop.Web.Services
     {
         Task<List<CarrinhoItemDto>> getItens(int usuarioId);
         Task<CarrinhoItemDto> AdicionaItem(CarrinhoItemAdicionaDto carrinhoItemAdicionaDto);
+        Task<CarrinhoItemDto> DeletaItem(int id);
+
+        Task<CarrinhoItemDto> AtualizaQuantidade(CarrinhoItemAtualizaQuantidadeDto carrinhoItemAtualizaQuantidadeDto);
     }
 }
